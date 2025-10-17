@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🐍 Advanced Snake Game</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e1e2f, #252547);
+            color: white;
+            font-family: "Segoe UI", Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        
+        h1 {
+            margin-bottom: 10px;
+            font-size: 2rem;
+            text-align: center;
+        }
+        
+        #gameCanvas {
+            background: #000;
+            border: 3px solid #fff;
+        }
+        
+        #score {
+            font-size: 20px;
+            margin-top: 10px;
+        }
+        
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #45a049;
+        }
+        
+        .difficulty {
+            margin-top: 15px;
+        }
+        
+        select {
+            padding: 5px;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        /* Mobile touch controls */
+        
+        .touch-controls {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: 60px 60px 60px;
+            grid-template-rows: 60px 60px 60px;
+            justify-content: center;
+            gap: 5px;
+        }
+        
+        .touch-btn {
+            background: #4caf50;
+            color: white;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        
+        .touch-btn:active {
+            background: #45a049;
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🐍 Advanced Snake Game</h1>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <div id="score">Score: 0</div>
+
+    <div class="difficulty">
+        Difficulty:
+        <select id="difficulty">
+      <option value="150">Easy 🐢</option>
+      <option value="100" selected>Medium 🐍</option>
+      <option value="70">Hard 🦅</option>
+    </select>
+    </div>
+
+    <div class="controls">
+        <button class="btn" onclick="startGame()">Start Game</button>
+        <button class="btn" onclick="resetGame()">Reset</button>
+    </div>
+
+    <!-- Mobile touch controls -->
+    <div class="touch-controls">
+        <div></div>
+        <button class="touch-btn" onclick="setDirection('UP')">⬆️</button>
+        <div></div>
+        <button class="touch-btn" onclick="setDirection('LEFT')">⬅️</button>
+        <div></div>
+        <button class="touch-btn" onclick="setDirection('RIGHT')">➡️</button>
+        <div></div>
+        <button class="touch-btn" onclick="setDirection('DOWN')">⬇️</button>
+        <div></div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const box = 20;
+        let snake = [];
+        let direction = "RIGHT";
+        let food = {};
+        let score = 0;
+        let game;
+        let speed = 100;
+
+        const eatSound = new Audio("https://www.fesliyanstudios.com/play-mp3/387");
+        const gameOverSound = new Audio("https://www.fesliyanstudios.com/play-mp3/6685");
+
+        function generateFood() {
+            food = {
+                x: Math.floor(Math.random() * (canvas.width / box)) * box,
+                y: Math.floor(Math.random() * (canvas.height / box)) * box,
+            };
+        }
+
+        function resetGame() {
+            clearInterval(game);
+            snake = [{
+                x: 8 * box,
+                y: 10 * box
+            }];
+            direction = "RIGHT";
+            score = 0;
+            document.getElementById("score").innerText = "Score: 0";
+            generateFood();
+        }
+
+        function setDirection(dir) {
+            if (dir === "LEFT" && direction !== "RIGHT") direction = "LEFT";
+            else if (dir === "UP" && direction !== "DOWN") direction = "UP";
+            else if (dir === "RIGHT" && direction !== "LEFT") direction = "RIGHT";
+            else if (dir === "DOWN" && direction !== "UP") direction = "DOWN";
+        }
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowLeft") setDirection("LEFT");
+            if (e.key === "ArrowUp") setDirection("UP");
+            if (e.key === "ArrowRight") setDirection("RIGHT");
+            if (e.key === "ArrowDown") setDirection("DOWN");
+        });
+
+        function drawGame() {
+            ctx.fillStyle = "#000";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < snake.length; i++) {
+                ctx.fillStyle = i === 0 ? "#4caf50" : "#76ff7a";
+                ctx.fillRect(snake[i].x, snake[i].y, box, box);
+            }
+
+            ctx.fillStyle = "red";
+            ctx.fillRect(food.x, food.y, box, box);
+
+            let headX = snake[0].x;
+            let headY = snake[0].y;
+
+            if (direction === "LEFT") headX -= box;
+            if (direction === "UP") headY -= box;
+            if (direction === "RIGHT") headX += box;
+            if (direction === "DOWN") headY += box;
+
+            if (headX === food.x && headY === food.y) {
+                eatSound.currentTime = 0;
+                eatSound.play();
+                score++;
+                document.getElementById("score").innerText = "Score: " + score;
+                generateFood();
+            } else {
+                snake.pop();
+            }
+
+            const newHead = {
+                x: headX,
+                y: headY
+            };
+
+            // Game over check
+            if (
+                headX < 0 ||
+                headY < 0 ||
+                headX >= canvas.width ||
+                headY >= canvas.height ||
+                snake.some(seg => seg.x === newHead.x && seg.y === newHead.y)
+            ) {
+                clearInterval(game);
+                gameOverSound.play();
+                alert("Game Over! Your score: " + score);
+                return;
+            }
+
+            snake.unshift(newHead);
+        }
+
+        function startGame() {
+            resetGame();
+            speed = parseInt(document.getElementById("difficulty").value);
+            game = setInterval(drawGame, speed);
+        }
+
+        generateFood();
+        snake.push({
+            x: 8 * box,
+            y: 10 * box
+        });
+    </script>
+</body>
+
+</html>
